@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Egg Clicker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fffbe6;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    h1 {
+      margin-bottom: 10px;
+      color: #5c3d00;
+    }
+    #egg {
+      width: 120px;
+      height: 160px;
+      background: radial-gradient(circle at 50% 40%, #fff, #f0e5c9);
+      border: 4px solid #d4b483;
+      border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: transform 0.1s ease;
+    }
+    #egg:active {
+      transform: scale(0.95);
+    }
+    #counter {
+      margin-top: 20px;
+      font-size: 1.5em;
+      color: #7a4e00;
+    }
+    #upgrade {
+      margin-top: 30px;
+      padding: 10px 20px;
+      background: #ffe0a3;
+      border: 2px solid #d4b483;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #upgrade:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>🥚 Egg Clicker</h1>
+  <div id="egg" onclick="clickEgg()"></div>
+  <div id="counter">Eggs: 0</div>
+  <button id="upgrade" onclick="buyUpgrade()" disabled>Buy Golden Egg (100 eggs)</button>
+
+  <script>
+    let eggs = 0;
+    let multiplier = 1;
+
+    function clickEgg() {
+      eggs += multiplier;
+      updateUI();
+    }
+
+    function updateUI() {
+      document.getElementById('counter').textContent = `Eggs: ${eggs}`;
+      document.getElementById('upgrade').disabled = eggs < 100;
+    }
+
+    function buyUpgrade() {
+      if (eggs >= 100) {
+        eggs -= 100;
+        multiplier += 1;
+        updateUI();
+        alert("You bought a Golden Egg! 🥇 Clicks are now worth more.");
+      }
+    }
+  </script>
+</body>
+</html>
