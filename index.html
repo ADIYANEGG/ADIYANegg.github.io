@@ -12,6 +12,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
     }
     h1 {
       margin-bottom: 10px;
@@ -64,6 +65,18 @@
       max-width: 300px;
       text-align: center;
     }
+    #resetBtn {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: #ffcccc;
+      border: 2px solid #cc6666;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #660000;
+    }
   </style>
 </head>
 <body>
@@ -76,6 +89,7 @@
   <button id="rebirthBtn" onclick="rebirth()" disabled>🔁 Rebirth (1M eggs)</button>
 
   <div id="log"></div>
+  <button id="resetBtn" onclick="confirmReset()">🧨 Reset Data</button>
 
   <script>
     let eggs = 0;
@@ -175,6 +189,19 @@
         } catch (e) {
           console.warn("Cookie load failed:", e);
         }
+      }
+    }
+
+    function confirmReset() {
+      if (!confirm("Are you sure you want to reset all progress?")) return;
+      if (!confirm("This will permanently delete your eggs, upgrades, and rebirths. Continue?")) return;
+      if (!confirm("Final warning: this cannot be undone. Proceed?")) return;
+      const input = prompt("Type 'ResetData' to confirm:");
+      if (input === "ResetData") {
+        document.cookie = "eggClicker=; path=/; max-age=0";
+        location.reload();
+      } else {
+        alert("Reset cancelled. You typed it wrong.");
       }
     }
 
