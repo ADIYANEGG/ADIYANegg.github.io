@@ -193,15 +193,22 @@
     }
 
     function confirmReset() {
-      if (!confirm("Are you sure you want to reset all progress?")) return;
-      if (!confirm("This will permanently delete your eggs, upgrades, and rebirths. Continue?")) return;
-      if (!confirm("Final warning: this cannot be undone. Proceed?")) return;
-      const input = prompt("Type 'ResetData' to confirm:");
-      if (input === "ResetData") {
+      try {
+        if (!confirm("Are you sure you want to reset all progress?")) return;
+        if (!confirm("This will permanently delete your eggs, upgrades, and rebirths. Continue?")) return;
+        if (!confirm("Final warning: this cannot be undone. Proceed?")) return;
+        const input = prompt("Type 'ResetData' to confirm:");
+        if (input === "ResetData") {
+          document.cookie = "eggClicker=; path=/; max-age=0";
+          alert("Data reset complete. Reloading...");
+          location.reload();
+        } else {
+          alert("Reset cancelled. You typed it wrong.");
+        }
+      } catch (e) {
+        alert("Reset failed due to corrupted data. Forcing wipe...");
         document.cookie = "eggClicker=; path=/; max-age=0";
         location.reload();
-      } else {
-        alert("Reset cancelled. You typed it wrong.");
       }
     }
 
