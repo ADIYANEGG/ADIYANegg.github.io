@@ -163,8 +163,7 @@
 
     function getUpgradeCost(up) {
       const cappedLevel = Math.min(up.level, 1000);
-      const scale = Math.pow(1.2, cappedLevel);
-      return Math.floor(up.baseCost * scale);
+      return Math.floor(up.baseCost * Math.pow(1.2, cappedLevel));
     }
 
     function getClickMultiplier() {
@@ -281,7 +280,10 @@
     }
 
     function loadGame() {
-      const match = document.cookie.match(/eggEmpire=([^;]+)/);
+      const matchEmpire = document.cookie.match(/eggEmpire=([^;]+)/);
+      const matchLegacy = document.cookie.match(/eggClicker=([^;]+)/);
+      const match = matchEmpire || matchLegacy;
+
       if (match) {
         try {
           const data = JSON.parse(decodeURIComponent(match[1]));
@@ -291,8 +293,12 @@
           rebirths = data.rebirths || 0;
           rebirthMultiplier = data.rebirthMultiplier || rebirths + 1;
           adiyans = data.adiyans || 0;
-          upgrades.forEach((up, i) => up.level = data.upgrades[i] || 0);
-          adiyanUpgrades.forEach((up, i) => up.level = data.adiyanUpgrades[i] || 0);
+          upgrades.forEach((up, i) => up.level = data.upgrades?.[i] || 0);
+          adiyanUpgrades.forEach((up, i) => up.level = data.adiyanUpgrades?.[i] || 0);
+
+          if (matchLegacy && !matchEmpire) {
+            document.cookie = "eggClicker=; path=/; max-age=0";
+          }
         } catch (e) {
           console.warn("Cookie load failed:", e);
         }
@@ -332,4 +338,3 @@
   </script>
 </body>
 </html>
-
