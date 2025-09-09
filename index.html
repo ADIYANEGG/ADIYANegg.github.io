@@ -35,15 +35,22 @@
       font-size: 1.4em;
       color: #7a4e00;
     }
+    #upgradeContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+      max-width: 600px;
+    }
     .upgrade, #rebirthBtn {
-      margin-top: 10px;
       padding: 10px 20px;
       background: #ffe0a3;
       border: 2px solid #d4b483;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      width: 280px;
+      flex: 1 1 260px;
       text-align: center;
     }
     .upgrade:disabled, #rebirthBtn:disabled {
