@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Egg Clicker Deluxe</title>
+  <title>Egg Clicker Empire</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -14,14 +14,14 @@
       overflow: hidden;
     }
     #sidebar {
-      width: 340px;
+      width: 360px;
       background: #fff2cc;
       border-right: 2px solid #d4b483;
       padding: 20px;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
       overflow-y: auto;
     }
     #main {
@@ -119,7 +119,7 @@
   </div>
 
   <div id="main">
-    <h1>🥚 Egg Clicker Deluxe</h1>
+    <h1>🥚 Egg Clicker Empire</h1>
     <div id="egg" onclick="clickEgg()"></div>
     <div id="counter">Eggs: 0</div>
     <div id="eps">Earnings/sec: 0</div>
@@ -143,17 +143,27 @@
       { name: "Egg Factory", baseCost: 2000, type: "auto", value: 20, level: 0, tooltip: "+20 eggs/sec" },
       { name: "Egg Drone", baseCost: 10000, type: "auto", value: 100, level: 0, tooltip: "+100 eggs/sec" },
       { name: "Egg Satellite", baseCost: 50000, type: "auto", value: 500, level: 0, tooltip: "+500 eggs/sec" },
-      { name: "Egg Multiplier", baseCost: 100000, type: "click", value: 10, level: 0, tooltip: "+10 click power" }
+      { name: "Egg Multiplier", baseCost: 100000, type: "click", value: 10, level: 0, tooltip: "+10 click power" },
+      { name: "Egg Reactor", baseCost: 250000, type: "auto", value: 1500, level: 0, tooltip: "+1500 eggs/sec" },
+      { name: "Egg Galaxy", baseCost: 1000000, type: "auto", value: 5000, level: 0, tooltip: "+5000 eggs/sec" },
+      { name: "Egg Universe", baseCost: 5000000, type: "auto", value: 20000, level: 0, tooltip: "+20k eggs/sec" },
+      { name: "Egg God", baseCost: 20000000, type: "click", value: 100, level: 0, tooltip: "+100 click power" },
+      { name: "Egg Singularity", baseCost: 1e8, type: "auto", value: 100000, level: 0, tooltip: "+100k eggs/sec" },
+      { name: "Egg Ascension", baseCost: 5e8, type: "click", value: 500, level: 0, tooltip: "+500 click power" }
     ];
 
-    const adiyanUpgrades = [
+    const adiyan    const adiyanUpgrades = [
       { name: "Click Boost", cost: 1, type: "click", value: 0.5, level: 0, tooltip: "+0.5x click multiplier" },
-      { name: "Auto Boost", cost: 2, type: "auto", value: 0.5, level: 0, tooltip: "+0.5x auto multiplier" }
+      { name: "Auto Boost", cost: 2, type: "auto", value: 0.5, level: 0, tooltip: "+0.5x auto multiplier" },
+      { name: "Rebirth Boost", cost: 3, type: "rebirth", value: 1, level: 0, tooltip: "+1 rebirth multiplier" },
+      { name: "Egg Value", cost: 5, type: "click", value: 1, level: 0, tooltip: "+1x click multiplier" },
+      { name: "Passive Engine", cost: 10, type: "auto", value: 2, level: 0, tooltip: "+2x auto multiplier" },
+      { name: "Efficiency Core", cost: 15, type: "click", value: 2, level: 0, tooltip: "+2x click multiplier" }
     ];
 
     function getUpgradeCost(up) {
       const cappedLevel = Math.min(up.level, 1000);
-      const scale = Math.pow(1.15, cappedLevel);
+      const scale = Math.pow(1.2, cappedLevel);
       return Math.floor(up.baseCost * scale);
     }
 
@@ -165,8 +175,12 @@
       return 1 + adiyanUpgrades.filter(u => u.type === "auto").reduce((sum, u) => sum + u.value * u.level, 0);
     }
 
+    function getRebirthBoost() {
+      return adiyanUpgrades.filter(u => u.type === "rebirth").reduce((sum, u) => sum + u.value * u.level, 0);
+    }
+
     function clickEgg() {
-      eggs += clickPower * rebirthMultiplier * getClickMultiplier();
+      eggs += clickPower * (rebirthMultiplier + getRebirthBoost()) * getClickMultiplier();
       updateUI();
       saveGame();
     }
@@ -191,8 +205,7 @@
         adiyans -= up.cost;
         up.level++;
         log(`Bought ${up.name} (Lv ${up.level})`);
-        update
-                updateUI();
+        updateUI();
         saveGame();
       }
     }
@@ -215,12 +228,16 @@
     function updateUI() {
       const clickMult = getClickMultiplier();
       const autoMult = getAutoMultiplier();
-      const totalClick = clickPower * rebirthMultiplier * clickMult;
-      const totalAuto = autoEggsPerSec * rebirthMultiplier * autoMult;
+      const rebirthMult = rebirthMultiplier + getRebirthBoost();
+      const totalClick = clickPower * rebirthMult * clickMult;
+      const totalAuto = autoEggsPerSec * rebirthMult * autoMult;
 
       document.getElementById('counter').textContent = `Eggs: ${Math.floor(eggs).toLocaleString()}`;
-      document.getElementById('eps').textContent = `Earnings/sec: ${Math.floor(totalAuto)}`;
-      document.getElementById('multipliers').textContent = `Click Multiplier: x${(rebirthMultiplier * clickMult).toFixed(2)} | Auto Multiplier: x${(rebirthMultiplier * autoMult).toFixed(2)} | Adiyans: ${adiyans}`;
+      document.getElementById('eps').textContent = `Earnings/sec: ${Math.floor(totalAuto).toLocaleString()}`;
+      document.getElementById('multipliers').textContent =
+        `Click Output: ${clickPower} × ${rebirthMult} × ${clickMult.toFixed(2)} = ${Math.floor(totalClick)} eggs/click | ` +
+        `Auto Output: ${autoEggsPerSec} × ${rebirthMult} × ${autoMult.toFixed(2)} = ${Math.floor(totalAuto)} eggs/sec | ` +
+        `Adiyans: ${adiyans}`;
 
       document.getElementById('rebirthBtn').disabled = eggs < 1000000;
 
@@ -260,11 +277,11 @@
         upgrades: upgrades.map(up => up.level),
         adiyanUpgrades: adiyanUpgrades.map(up => up.level)
       };
-      document.cookie = "eggClicker=" + encodeURIComponent(JSON.stringify(data)) + "; path=/; max-age=31536000";
+      document.cookie = "eggEmpire=" + encodeURIComponent(JSON.stringify(data)) + "; path=/; max-age=31536000";
     }
 
     function loadGame() {
-      const match = document.cookie.match(/eggClicker=([^;]+)/);
+      const match = document.cookie.match(/eggEmpire=([^;]+)/);
       if (match) {
         try {
           const data = JSON.parse(decodeURIComponent(match[1]));
@@ -289,7 +306,7 @@
         if (!confirm("Final warning: this cannot be undone. Proceed?")) return;
         const input = prompt("Type 'ResetData' to confirm:");
         if (input === "ResetData") {
-          document.cookie = "eggClicker=; path=/; max-age=0";
+          document.cookie = "eggEmpire=; path=/; max-age=0";
           alert("Data reset complete. Reloading...");
           location.reload();
         } else {
@@ -297,7 +314,7 @@
         }
       } catch (e) {
         alert("Reset failed due to corrupted data. Forcing wipe...");
-        document.cookie = "eggClicker=; path=/; max-age=0";
+        document.cookie = "eggEmpire=; path=/; max-age=0";
         location.reload();
       }
     }
@@ -308,7 +325,7 @@
     };
 
     setInterval(() => {
-      eggs += autoEggsPerSec * rebirthMultiplier * getAutoMultiplier();
+      eggs += autoEggsPerSec * (rebirthMultiplier + getRebirthBoost()) * getAutoMultiplier();
       updateUI();
       saveGame();
     }, 1000);
