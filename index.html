@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Egg Clicker: Deluxe Adiyan</title>
+  <title>Egg Clicker Deluxe</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -14,7 +14,7 @@
       overflow: hidden;
     }
     #sidebar {
-      width: 320px;
+      width: 340px;
       background: #fff2cc;
       border-right: 2px solid #d4b483;
       padding: 20px;
@@ -30,8 +30,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      position: relative;
       padding: 20px;
+      position: relative;
     }
     h1 {
       margin-bottom: 10px;
@@ -50,17 +50,17 @@
     #egg:active {
       transform: scale(0.95);
     }
-    #counter, #eps {
+    #counter, #eps, #multipliers {
       margin-top: 10px;
-      font-size: 1.4em;
+      font-size: 1.2em;
       color: #7a4e00;
     }
-    #upgradeContainer {
+    #upgradeContainer, #adiyanShop {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-    .upgrade, #rebirthBtn {
+    .upgrade, .adiyanUpgrade, #rebirthBtn {
       padding: 10px;
       background: #ffe0a3;
       border: 2px solid #d4b483;
@@ -68,10 +68,25 @@
       cursor: pointer;
       font-weight: bold;
       text-align: center;
+      position: relative;
     }
-    .upgrade:disabled, #rebirthBtn:disabled {
+    .upgrade:disabled, .adiyanUpgrade:disabled, #rebirthBtn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+    .upgrade:hover::after, .adiyanUpgrade:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 100%;
+      top: 0;
+      margin-left: 10px;
+      background: #fff8dc;
+      border: 1px solid #d4b483;
+      padding: 6px;
+      font-size: 0.85em;
+      color: #5c3d00;
+      white-space: nowrap;
+      z-index: 5;
     }
     #log {
       margin-top: 20px;
@@ -99,13 +114,16 @@
     <h2>Upgrades</h2>
     <div id="upgradeContainer"></div>
     <button id="rebirthBtn" onclick="rebirth()" disabled>🔁 Rebirth (1M eggs)</button>
+    <h2>Adiyan Shop</h2>
+    <div id="adiyanShop"></div>
   </div>
 
   <div id="main">
-    <h1>🥚 Egg Clicker: Deluxe Adiyan</h1>
+    <h1>🥚 Egg Clicker Deluxe</h1>
     <div id="egg" onclick="clickEgg()"></div>
     <div id="counter">Eggs: 0</div>
     <div id="eps">Earnings/sec: 0</div>
+    <div id="multipliers">Multiplier: x1</div>
     <div id="log"></div>
   </div>
 
@@ -117,14 +135,20 @@
     let autoEggsPerSec = 0;
     let rebirths = 0;
     let rebirthMultiplier = 1;
+    let adiyans = 0;
 
     const upgrades = [
-      { name: "Golden Egg", baseCost: 100, type: "click", value: 1, level: 0 },
-      { name: "Egg Farm", baseCost: 500, type: "auto", value: 5, level: 0 },
-      { name: "Egg Factory", baseCost: 2000, type: "auto", value: 20, level: 0 },
-      { name: "Egg Drone", baseCost: 10000, type: "auto", value: 100, level: 0 },
-      { name: "Egg Satellite", baseCost: 50000, type: "auto", value: 500, level: 0 },
-      { name: "Egg Multiplier", baseCost: 100000, type: "click", value: 10, level: 0 }
+      { name: "Golden Egg", baseCost: 100, type: "click", value: 1, level: 0, tooltip: "+1 click power" },
+      { name: "Egg Farm", baseCost: 500, type: "auto", value: 5, level: 0, tooltip: "+5 eggs/sec" },
+      { name: "Egg Factory", baseCost: 2000, type: "auto", value: 20, level: 0, tooltip: "+20 eggs/sec" },
+      { name: "Egg Drone", baseCost: 10000, type: "auto", value: 100, level: 0, tooltip: "+100 eggs/sec" },
+      { name: "Egg Satellite", baseCost: 50000, type: "auto", value: 500, level: 0, tooltip: "+500 eggs/sec" },
+      { name: "Egg Multiplier", baseCost: 100000, type: "click", value: 10, level: 0, tooltip: "+10 click power" }
+    ];
+
+    const adiyanUpgrades = [
+      { name: "Click Boost", cost: 1, type: "click", value: 0.5, level: 0, tooltip: "+0.5x click multiplier" },
+      { name: "Auto Boost", cost: 2, type: "auto", value: 0.5, level: 0, tooltip: "+0.5x auto multiplier" }
     ];
 
     function getUpgradeCost(up) {
@@ -133,8 +157,16 @@
       return Math.floor(up.baseCost * scale);
     }
 
+    function getClickMultiplier() {
+      return 1 + adiyanUpgrades.filter(u => u.type === "click").reduce((sum, u) => sum + u.value * u.level, 0);
+    }
+
+    function getAutoMultiplier() {
+      return 1 + adiyanUpgrades.filter(u => u.type === "auto").reduce((sum, u) => sum + u.value * u.level, 0);
+    }
+
     function clickEgg() {
-      eggs += clickPower * rebirthMultiplier;
+      eggs += clickPower * rebirthMultiplier * getClickMultiplier();
       updateUI();
       saveGame();
     }
@@ -153,35 +185,68 @@
       }
     }
 
+    function buyAdiyanUpgrade(index) {
+      const up = adiyanUpgrades[index];
+      if (adiyans >= up.cost) {
+        adiyans -= up.cost;
+        up.level++;
+        log(`Bought ${up.name} (Lv ${up.level})`);
+        update
+                updateUI();
+        saveGame();
+      }
+    }
+
     function rebirth() {
       if (eggs >= 1000000) {
         rebirths++;
         rebirthMultiplier = rebirths + 1;
+        adiyans += 1;
         eggs = 0;
         clickPower = 1;
         autoEggsPerSec = 0;
         upgrades.forEach(up => up.level = 0);
-        log(`Rebirth complete! Multiplier is now x${rebirthMultiplier}`);
+        log(`Rebirth complete! You earned 1 Adiyan. Total: ${adiyans}`);
         updateUI();
         saveGame();
       }
     }
 
     function updateUI() {
-      document.getElementById('counter').textContent = `Eggs: ${eggs.toLocaleString()}`;
-      document.getElementById('eps').textContent = `Earnings/sec: ${autoEggsPerSec * rebirthMultiplier}`;
+      const clickMult = getClickMultiplier();
+      const autoMult = getAutoMultiplier();
+      const totalClick = clickPower * rebirthMultiplier * clickMult;
+      const totalAuto = autoEggsPerSec * rebirthMultiplier * autoMult;
+
+      document.getElementById('counter').textContent = `Eggs: ${Math.floor(eggs).toLocaleString()}`;
+      document.getElementById('eps').textContent = `Earnings/sec: ${Math.floor(totalAuto)}`;
+      document.getElementById('multipliers').textContent = `Click Multiplier: x${(rebirthMultiplier * clickMult).toFixed(2)} | Auto Multiplier: x${(rebirthMultiplier * autoMult).toFixed(2)} | Adiyans: ${adiyans}`;
+
       document.getElementById('rebirthBtn').disabled = eggs < 1000000;
 
-      const container = document.getElementById('upgradeContainer');
-      container.innerHTML = '';
+      const upgradeContainer = document.getElementById('upgradeContainer');
+      upgradeContainer.innerHTML = '';
       upgrades.forEach((up, i) => {
         const cost = getUpgradeCost(up);
         const btn = document.createElement('button');
         btn.className = 'upgrade';
         btn.textContent = `${up.name} (Lv ${up.level}) — ${cost.toLocaleString()} eggs`;
         btn.disabled = eggs < cost;
+        btn.setAttribute('data-tooltip', up.tooltip);
         btn.onclick = () => buyUpgrade(i);
-        container.appendChild(btn);
+        upgradeContainer.appendChild(btn);
+      });
+
+      const adiyanShop = document.getElementById('adiyanShop');
+      adiyanShop.innerHTML = '';
+      adiyanUpgrades.forEach((up, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'adiyanUpgrade';
+        btn.textContent = `${up.name} (Lv ${up.level}) — ${up.cost} Adiyan`;
+        btn.disabled = adiyans < up.cost;
+        btn.setAttribute('data-tooltip', up.tooltip);
+        btn.onclick = () => buyAdiyanUpgrade(i);
+        adiyanShop.appendChild(btn);
       });
     }
 
@@ -191,8 +256,9 @@
 
     function saveGame() {
       const data = {
-        eggs, clickPower, autoEggsPerSec, rebirths, rebirthMultiplier,
-        upgrades: upgrades.map(up => up.level)
+        eggs, clickPower, autoEggsPerSec, rebirths, rebirthMultiplier, adiyans,
+        upgrades: upgrades.map(up => up.level),
+        adiyanUpgrades: adiyanUpgrades.map(up => up.level)
       };
       document.cookie = "eggClicker=" + encodeURIComponent(JSON.stringify(data)) + "; path=/; max-age=31536000";
     }
@@ -207,7 +273,9 @@
           autoEggsPerSec = data.autoEggsPerSec || 0;
           rebirths = data.rebirths || 0;
           rebirthMultiplier = data.rebirthMultiplier || rebirths + 1;
+          adiyans = data.adiyans || 0;
           upgrades.forEach((up, i) => up.level = data.upgrades[i] || 0);
+          adiyanUpgrades.forEach((up, i) => up.level = data.adiyanUpgrades[i] || 0);
         } catch (e) {
           console.warn("Cookie load failed:", e);
         }
@@ -217,7 +285,7 @@
     function confirmReset() {
       try {
         if (!confirm("Are you sure you want to reset all progress?")) return;
-        if (!confirm("This will permanently delete your eggs, upgrades, and rebirths. Continue?")) return;
+        if (!confirm("This will permanently delete your eggs, upgrades, and Adiyans. Continue?")) return;
         if (!confirm("Final warning: this cannot be undone. Proceed?")) return;
         const input = prompt("Type 'ResetData' to confirm:");
         if (input === "ResetData") {
@@ -240,11 +308,10 @@
     };
 
     setInterval(() => {
-      eggs += autoEggsPerSec * rebirthMultiplier;
+      eggs += autoEggsPerSec * rebirthMultiplier * getAutoMultiplier();
       updateUI();
       saveGame();
     }, 1000);
   </script>
 </body>
 </html>
-
