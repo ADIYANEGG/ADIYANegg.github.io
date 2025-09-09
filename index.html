@@ -8,12 +8,10 @@
       font-family: 'Segoe UI', sans-serif;
       background: #fffbe6;
       margin: 0;
-      padding: 0;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
     }
     h1 {
       margin-bottom: 10px;
@@ -37,18 +35,27 @@
       font-size: 1.5em;
       color: #7a4e00;
     }
-    #upgrade {
-      margin-top: 30px;
+    .upgrade {
+      margin-top: 15px;
       padding: 10px 20px;
       background: #ffe0a3;
       border: 2px solid #d4b483;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
+      width: 260px;
+      text-align: center;
     }
-    #upgrade:disabled {
+    .upgrade:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+    #log {
+      margin-top: 30px;
+      font-size: 0.9em;
+      color: #5c3d00;
+      max-width: 300px;
+      text-align: center;
     }
   </style>
 </head>
@@ -56,30 +63,95 @@
   <h1>🥚 Egg Clicker</h1>
   <div id="egg" onclick="clickEgg()"></div>
   <div id="counter">Eggs: 0</div>
-  <button id="upgrade" onclick="buyUpgrade()" disabled>Buy Golden Egg (100 eggs)</button>
+
+  <button class="upgrade" id="upgrade1" onclick="buyUpgrade(1)">Golden Egg (+1 click) — 100 eggs</button>
+  <button class="upgrade" id="upgrade2" onclick="buyUpgrade(2)">Egg Farm (+5/sec) — 500 eggs</button>
+  <button class="upgrade" id="upgrade3" onclick="buyUpgrade(3)">Egg Factory (+20/sec) — 2000 eggs</button>
+
+  <div id="log"></div>
 
   <script>
     let eggs = 0;
-    let multiplier = 1;
+    let clickPower = 1;
+    let autoEggsPerSec = 0;
+
+    const upgrades = {
+      1: { name: "Golden Egg", cost: 100, type: "click", value: 1 },
+      2: { name: "Egg Farm", cost: 500, type: "auto", value: 5 },
+      3: { name: "Egg Factory", cost: 2000, type: "auto", value: 20 }
+    };
 
     function clickEgg() {
-      eggs += multiplier;
+      eggs += clickPower;
       updateUI();
+      saveGame();
+    }
+
+    function buyUpgrade(id) {
+      const up = upgrades[id];
+      if (eggs >= up.cost) {
+        eggs -= up.cost;
+        if (up.type === "click") clickPower += up.value;
+        else autoEggsPerSec += up.value;
+
+        up.cost = Math.floor(up.cost * 1.5);
+        document.getElementById(`upgrade${id}`).textContent =
+          `${up.name} (${up.type === "click" ? "+" + up.value + " click" : "+" + up.value + "/sec"}) — ${up.cost} eggs`;
+
+        log(`Bought ${up.name}!`);
+        updateUI();
+        saveGame();
+      }
     }
 
     function updateUI() {
       document.getElementById('counter').textContent = `Eggs: ${eggs}`;
-      document.getElementById('upgrade').disabled = eggs < 100;
-    }
-
-    function buyUpgrade() {
-      if (eggs >= 100) {
-        eggs -= 100;
-        multiplier += 1;
-        updateUI();
-        alert("You bought a Golden Egg! 🥇 Clicks are now worth more.");
+      for (let id in upgrades) {
+        document.getElementById(`upgrade${id}`).disabled = eggs < upgrades[id].cost;
       }
     }
+
+    function log(msg) {
+      document.getElementById('log').textContent = msg;
+    }
+
+    function saveGame() {
+      const data = {
+        eggs,
+        clickPower,
+        autoEggsPerSec,
+        upgrades: Object.fromEntries(Object.entries(upgrades).map(([id, up]) => [id, up.cost]))
+      };
+      document.cookie = "eggClicker=" + encodeURIComponent(JSON.stringify(data)) + "; path=/; max-age=31536000";
+    }
+
+    function loadGame() {
+      const match = document.cookie.match(/eggClicker=([^;]+)/);
+      if (match) {
+        try {
+          const data = JSON.parse(decodeURIComponent(match[1]));
+          eggs = data.eggs || 0;
+          clickPower = data.clickPower || 1;
+          autoEggsPerSec = data.autoEggsPerSec || 0;
+          for (let id in data.upgrades) {
+            upgrades[id].cost = data.upgrades[id];
+            document.getElementById(`upgrade${id}`).textContent =
+              `${upgrades[id].name} (${upgrades[id].type === "click" ? "+" + upgrades[id].value + " click" : "+" + upgrades[id].value + "/sec"}) — ${upgrades[id].cost} eggs`;
+          }
+        } catch (e) {
+          console.warn("Failed to load saved game:", e);
+        }
+      }
+    }
+
+    setInterval(() => {
+      eggs += autoEggsPerSec;
+      updateUI();
+      saveGame();
+    }, 1000);
+
+    loadGame();
+    updateUI();
   </script>
 </body>
 </html>
