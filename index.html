@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Egg Clicker: Deluxe Adiyan Edition</title>
+  <title>Egg Clicker: Deluxe Adiyan Edition</title> <!-- Line 6 -->
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -69,6 +69,7 @@
       font-weight: bold;
       text-align: center;
       position: relative;
+      overflow: visible;
     }
     .upgrade:disabled, .adiyanUpgrade:disabled, #rebirthBtn:disabled {
       opacity: 0.5;
@@ -77,9 +78,10 @@
     .upgrade:hover::after, .adiyanUpgrade:hover::after {
       content: attr(data-tooltip);
       position: absolute;
-      left: 100%;
-      top: 0;
-      margin-left: 10px;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 8px;
       background: #fff8dc;
       border: 1px solid #d4b483;
       padding: 6px;
@@ -119,7 +121,7 @@
   </div>
 
   <div id="main">
-    <h1>🥚 Egg Clicker: Deluxe Adiyan Edition</h1>
+    <h1>🥚 Egg Clicker: Deluxe Adiyan Edition</h1> <!-- Line 91 -->
     <div id="egg" onclick="clickEgg()"></div>
     <div id="counter">Eggs: 0</div>
     <div id="eps">Earnings/sec: 0</div>
@@ -338,4 +340,3 @@
   </script>
 </body>
 </html>
-
