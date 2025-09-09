@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Egg Clicker</title>
+  <title>Egg Clicker Deluxe</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -30,28 +30,28 @@
     #egg:active {
       transform: scale(0.95);
     }
-    #counter {
-      margin-top: 20px;
-      font-size: 1.5em;
+    #counter, #eps {
+      margin-top: 10px;
+      font-size: 1.4em;
       color: #7a4e00;
     }
-    .upgrade {
-      margin-top: 15px;
+    .upgrade, #rebirthBtn {
+      margin-top: 10px;
       padding: 10px 20px;
       background: #ffe0a3;
       border: 2px solid #d4b483;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      width: 260px;
+      width: 280px;
       text-align: center;
     }
-    .upgrade:disabled {
+    .upgrade:disabled, #rebirthBtn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
     #log {
-      margin-top: 30px;
+      margin-top: 20px;
       font-size: 0.9em;
       color: #5c3d00;
       max-width: 300px;
@@ -60,13 +60,13 @@
   </style>
 </head>
 <body>
-  <h1>🥚 Egg Clicker</h1>
+  <h1>🥚 Egg Clicker Deluxe</h1>
   <div id="egg" onclick="clickEgg()"></div>
   <div id="counter">Eggs: 0</div>
+  <div id="eps">Earnings/sec: 0</div>
 
-  <button class="upgrade" id="upgrade1" onclick="buyUpgrade(1)">Golden Egg (+1 click) — 100 eggs</button>
-  <button class="upgrade" id="upgrade2" onclick="buyUpgrade(2)">Egg Farm (+5/sec) — 500 eggs</button>
-  <button class="upgrade" id="upgrade3" onclick="buyUpgrade(3)">Egg Factory (+20/sec) — 2000 eggs</button>
+  <div id="upgradeContainer"></div>
+  <button id="rebirthBtn" onclick="rebirth()" disabled>🔁 Rebirth (1M eggs)</button>
 
   <div id="log"></div>
 
@@ -74,41 +74,72 @@
     let eggs = 0;
     let clickPower = 1;
     let autoEggsPerSec = 0;
+    let rebirths = 0;
+    let rebirthMultiplier = 1;
 
-    const upgrades = {
-      1: { name: "Golden Egg", cost: 100, type: "click", value: 1 },
-      2: { name: "Egg Farm", cost: 500, type: "auto", value: 5 },
-      3: { name: "Egg Factory", cost: 2000, type: "auto", value: 20 }
-    };
+    const upgrades = [
+      { name: "Golden Egg", baseCost: 100, type: "click", value: 1, level: 0 },
+      { name: "Egg Farm", baseCost: 500, type: "auto", value: 5, level: 0 },
+      { name: "Egg Factory", baseCost: 2000, type: "auto", value: 20, level: 0 },
+      { name: "Egg Drone", baseCost: 10000, type: "auto", value: 100, level: 0 },
+      { name: "Egg Satellite", baseCost: 50000, type: "auto", value: 500, level: 0 },
+      { name: "Egg Multiplier", baseCost: 100000, type: "click", value: 10, level: 0 }
+    ];
+
+    function getUpgradeCost(up) {
+      return Math.floor(up.baseCost * Math.pow(1.5, up.level));
+    }
 
     function clickEgg() {
-      eggs += clickPower;
+      eggs += clickPower * rebirthMultiplier;
       updateUI();
       saveGame();
     }
 
-    function buyUpgrade(id) {
-      const up = upgrades[id];
-      if (eggs >= up.cost) {
-        eggs -= up.cost;
+    function buyUpgrade(index) {
+      const up = upgrades[index];
+      const cost = getUpgradeCost(up);
+      if (eggs >= cost) {
+        eggs -= cost;
+        up.level++;
         if (up.type === "click") clickPower += up.value;
         else autoEggsPerSec += up.value;
+        log(`Upgraded ${up.name} to level ${up.level}`);
+        updateUI();
+        saveGame();
+      }
+    }
 
-        up.cost = Math.floor(up.cost * 1.5);
-        document.getElementById(`upgrade${id}`).textContent =
-          `${up.name} (${up.type === "click" ? "+" + up.value + " click" : "+" + up.value + "/sec"}) — ${up.cost} eggs`;
-
-        log(`Bought ${up.name}!`);
+    function rebirth() {
+      if (eggs >= 1000000) {
+        rebirths++;
+        rebirthMultiplier += 1;
+        eggs = 0;
+        clickPower = 1;
+        autoEggsPerSec = 0;
+        upgrades.forEach(up => up.level = 0);
+        log(`Rebirth complete! Multiplier is now x${rebirthMultiplier}`);
         updateUI();
         saveGame();
       }
     }
 
     function updateUI() {
-      document.getElementById('counter').textContent = `Eggs: ${eggs}`;
-      for (let id in upgrades) {
-        document.getElementById(`upgrade${id}`).disabled = eggs < upgrades[id].cost;
-      }
+      document.getElementById('counter').textContent = `Eggs: ${eggs.toLocaleString()}`;
+      document.getElementById('eps').textContent = `Earnings/sec: ${autoEggsPerSec * rebirthMultiplier}`;
+      document.getElementById('rebirthBtn').disabled = eggs < 1000000;
+
+      const container = document.getElementById('upgradeContainer');
+      container.innerHTML = '';
+      upgrades.forEach((up, i) => {
+        const cost = getUpgradeCost(up);
+        const btn = document.createElement('button');
+        btn.className = 'upgrade';
+        btn.textContent = `${up.name} (Lv ${up.level}) — ${cost} eggs`;
+        btn.disabled = eggs < cost;
+        btn.onclick = () => buyUpgrade(i);
+        container.appendChild(btn);
+      });
     }
 
     function log(msg) {
@@ -117,35 +148,31 @@
 
     function saveGame() {
       const data = {
-        eggs,
-        clickPower,
-        autoEggsPerSec,
-        upgrades: Object.fromEntries(Object.entries(upgrades).map(([id, up]) => [id, up.cost]))
+        eggs, clickPower, autoEggsPerSec, rebirths, rebirthMultiplier,
+        upgrades: upgrades.map(up => up.level)
       };
-      document.cookie = "eggClicker=" + encodeURIComponent(JSON.stringify(data)) + "; path=/; max-age=31536000";
+      localStorage.setItem('eggClickerSave', JSON.stringify(data));
     }
 
     function loadGame() {
-      const match = document.cookie.match(/eggClicker=([^;]+)/);
-      if (match) {
+      const raw = localStorage.getItem('eggClickerSave');
+      if (raw) {
         try {
-          const data = JSON.parse(decodeURIComponent(match[1]));
+          const data = JSON.parse(raw);
           eggs = data.eggs || 0;
           clickPower = data.clickPower || 1;
           autoEggsPerSec = data.autoEggsPerSec || 0;
-          for (let id in data.upgrades) {
-            upgrades[id].cost = data.upgrades[id];
-            document.getElementById(`upgrade${id}`).textContent =
-              `${upgrades[id].name} (${upgrades[id].type === "click" ? "+" + upgrades[id].value + " click" : "+" + upgrades[id].value + "/sec"}) — ${upgrades[id].cost} eggs`;
-          }
+          rebirths = data.rebirths || 0;
+          rebirthMultiplier = data.rebirthMultiplier || 1;
+          upgrades.forEach((up, i) => up.level = data.upgrades[i] || 0);
         } catch (e) {
-          console.warn("Failed to load saved game:", e);
+          console.warn("Save corrupted:", e);
         }
       }
     }
 
     setInterval(() => {
-      eggs += autoEggsPerSec;
+      eggs += autoEggsPerSec * rebirthMultiplier;
       updateUI();
       saveGame();
     }, 1000);
