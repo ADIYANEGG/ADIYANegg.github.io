@@ -293,3 +293,112 @@ function updateUI() {
     const cost = getUpgradeCost(up);
     const btn = document.createElement('button');
     btn.class
+    btn.className = 'upgrade';
+    btn.textContent = `${up.name} (Lv ${up.level}) — ${cost.toLocaleString()} eggs`;
+    btn.disabled = eggs < cost;
+    btn.setAttribute('data-tooltip', up.tooltip);
+    btn.onclick = () => buyUpgrade(i);
+    upgradeContainer.appendChild(btn);
+  });
+
+  const adiyanShop = document.getElementById('adiyanShop');
+  adiyanShop.innerHTML = '';
+  adiyanUpgrades.forEach((up, i) => {
+    const cost = getAdiyanCost(up);
+    const btn = document.createElement('button');
+    btn.className = 'adiyanUpgrade';
+    btn.textContent = `${up.name} (Lv ${up.level}) — ${cost} Adiyans`;
+    btn.disabled = adiyans < cost;
+    btn.setAttribute('data-tooltip', up.tooltip);
+    btn.onclick = () => buyAdiyanUpgrade(i);
+    adiyanShop.appendChild(btn);
+  });
+
+  const adiyamShop = document.getElementById('adiyamShop');
+  adiyamShop.innerHTML = '';
+  adiyamUpgrades.forEach((up, i) => {
+    const cost = up.cost * Math.pow(up.level + 1, 2);
+    const btn = document.createElement('button');
+    btn.className = 'adiyamUpgrade';
+    btn.textContent = `${up.name} (Lv ${up.level}) — ${cost} Adiyams`;
+    btn.disabled = adiyams < cost;
+    btn.setAttribute('data-tooltip', up.tooltip);
+    btn.onclick = () => buyAdiyamUpgrade(i);
+    adiyamShop.appendChild(btn);
+  });
+}
+
+function log(msg) {
+  document.getElementById('log').textContent = msg;
+}
+
+function saveGame() {
+  const data = {
+    eggs, clickPower, autoEggsPerSec, rebirths, rebirthMultiplier, adiyans, adiyams,
+    upgrades: upgrades.map(up => up.level),
+    adiyanUpgrades: adiyanUpgrades.map(up => up.level),
+    adiyamUpgrades: adiyamUpgrades.map(up => up.level)
+  };
+  document.cookie = "eggEmpire=" + encodeURIComponent(JSON.stringify(data)) + "; path=/; max-age=31536000";
+}
+
+function loadGame() {
+  const matchEmpire = document.cookie.match(/eggEmpire=([^;]+)/);
+  const matchLegacy = document.cookie.match(/eggClicker=([^;]+)/);
+  const match = matchEmpire || matchLegacy;
+
+  if (match) {
+    try {
+      const data = JSON.parse(decodeURIComponent(match[1]));
+      eggs = data.eggs || 0;
+      clickPower = data.clickPower || 1;
+      autoEggsPerSec = data.autoEggsPerSec || 0;
+      rebirths = data.rebirths || 0;
+      rebirthMultiplier = data.rebirthMultiplier || rebirths + 1;
+      adiyans = data.adiyans || 0;
+      adiyams = data.adiyams || 0;
+      upgrades.forEach((up, i) => up.level = data.upgrades?.[i] || 0);
+      adiyanUpgrades.forEach((up, i) => up.level = data.adiyanUpgrades?.[i] || 0);
+      adiyamUpgrades.forEach((up, i) => up.level = data.adiyamUpgrades?.[i] || 0);
+      if (matchLegacy && !matchEmpire) {
+        document.cookie = "eggClicker=; path=/; max-age=0";
+      }
+    } catch (e) {
+      console.warn("Cookie load failed:", e);
+    }
+  }
+}
+
+function confirmReset() {
+  try {
+    if (!confirm("Are you sure you want to reset all progress?")) return;
+    if (!confirm("This will permanently delete your eggs, upgrades, Adiyans, and Adiyams. Continue?")) return;
+    if (!confirm("Final warning: this cannot be undone. Proceed?")) return;
+    const input = prompt("Type 'ResetData' to confirm:");
+    if (input === "ResetData") {
+      document.cookie = "eggEmpire=; path=/; max-age=0";
+      alert("Data reset complete. Reloading...");
+      location.reload();
+    } else {
+      alert("Reset cancelled. You typed it wrong.");
+    }
+  } catch (e) {
+    alert("Reset failed due to corrupted data. Forcing wipe...");
+    document.cookie = "eggEmpire=; path=/; max-age=0";
+    location.reload();
+  }
+}
+
+window.onload = () => {
+  loadGame();
+  updateUI();
+};
+
+setInterval(() => {
+  eggs += autoEggsPerSec * (rebirthMultiplier + getRebirthBoost()) * getAutoMultiplier();
+  updateUI();
+  saveGame();
+}, 1000);
+  </script>
+</body>
+</html>
