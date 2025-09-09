@@ -151,14 +151,14 @@
         eggs, clickPower, autoEggsPerSec, rebirths, rebirthMultiplier,
         upgrades: upgrades.map(up => up.level)
       };
-      localStorage.setItem('eggClickerSave', JSON.stringify(data));
+      document.cookie = "eggClicker=" + encodeURIComponent(JSON.stringify(data)) + "; path=/; max-age=31536000";
     }
 
     function loadGame() {
-      const raw = localStorage.getItem('eggClickerSave');
-      if (raw) {
+      const match = document.cookie.match(/eggClicker=([^;]+)/);
+      if (match) {
         try {
-          const data = JSON.parse(raw);
+          const data = JSON.parse(decodeURIComponent(match[1]));
           eggs = data.eggs || 0;
           clickPower = data.clickPower || 1;
           autoEggsPerSec = data.autoEggsPerSec || 0;
@@ -166,7 +166,7 @@
           rebirthMultiplier = data.rebirthMultiplier || 1;
           upgrades.forEach((up, i) => up.level = data.upgrades[i] || 0);
         } catch (e) {
-          console.warn("Save corrupted:", e);
+          console.warn("Cookie load failed:", e);
         }
       }
     }
