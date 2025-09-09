@@ -108,7 +108,9 @@
     ];
 
     function getUpgradeCost(up) {
-      return Math.floor(up.baseCost * Math.pow(1.5, up.level));
+      const cappedLevel = Math.min(up.level, 1000);
+      const scale = Math.pow(1.15, cappedLevel);
+      return Math.floor(up.baseCost * scale);
     }
 
     function clickEgg() {
@@ -120,7 +122,7 @@
     function buyUpgrade(index) {
       const up = upgrades[index];
       const cost = getUpgradeCost(up);
-      if (eggs >= cost) {
+      if (eggs >= cost && up.level < 1000) {
         eggs -= cost;
         up.level++;
         if (up.type === "click") clickPower += up.value;
@@ -156,7 +158,7 @@
         const cost = getUpgradeCost(up);
         const btn = document.createElement('button');
         btn.className = 'upgrade';
-        btn.textContent = `${up.name} (Lv ${up.level}) — ${cost} eggs`;
+        btn.textContent = `${up.name} (Lv ${up.level}) — ${cost.toLocaleString()} eggs`;
         btn.disabled = eggs < cost;
         btn.onclick = () => buyUpgrade(i);
         container.appendChild(btn);
